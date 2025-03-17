@@ -1,14 +1,16 @@
 const mongoose = require('mongoose');
 
-mongoose.connect('mongodb+srv://prajapatiharsh08:harsh875@cluster0.y2orx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
+mongoose.connect('mongodb://localhost:27017/nodejs')
+   
+const db = mongoose.connection
 
-const db=mongoose.connection
-
-db.on('connected', (err,data)=>{
-    if(err){
-        console.log('error')
+db.on('connected', (err, data) => {
+    if (err) {
+        console.log('err');
     }
     else {
-        console.log('Database Connected....')
-    } 
-}) 
+        console.log('database connected')
+    }
+});
+
+module.exports = mongoose;

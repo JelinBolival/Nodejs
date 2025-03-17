@@ -1,34 +1,33 @@
-const User = require("../models/userModel");
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const User = require('../models/User');
 
 const signup = async (req, res) => {
+
     const { username, password } = req.body;
-    const user = new User({ username, password });
-    await user.save();
-    res.send("Signup successful, go to login page!");
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = new User({ username, password: hashedPassword });
+    await newUser.save();
+    
+    res.status(201).send('User registered successfully');
+
 };
 
 const login = async (req, res) => {
+
     const { username, password } = req.body;
-    const user = await User.findOne({ username, password });
+    const user = await User.findOne({ username });
 
-    if (!user) {
-        return res.send("Invalid username or password");
-    }
+    if (!user) return res.status(400).send('User not found');
 
-    res.cookie("userId", user._id.toString(), { maxAge: 1000 * 60 * 60 * 24 }); // 1 day expiry
-    res.redirect("/home");
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(400).send('Invalid credentials');
+
+    const token = jwt.sign({ username: user.username }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    res.json({ token });
+
 };
 
-const logout = (req, res) => {
-    res.clearCookie("userId");
-    res.send("Logged out successfully");
-};
-
-const home = (req, res) => {
-    if (!req.cookies.userId) {
-        return res.redirect("/login");
-    }
-    res.render("home");
-};
-
-module.exports = { signup, login, logout, home };
+module.exports = { login, signup }
